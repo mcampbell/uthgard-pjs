@@ -28,15 +28,15 @@ THISBIN="$(basename $0)"
 cd $HERE
 
 ########################################
-PJ="/home/mcampbell/phantomjs-2.0.0-20150528/bin/phantomjs"
+PJ="docker run -it --rm mcampbell/uthgard-pjs"
 
 # [2017-01-20T10:24:49-0500] <@[Uth]Infobot>  � Server Status � Online with 2753 clients and 4 queued clients  �
 #   md = line.match(/.(\d\d\d\d)-(\d\d)-(\d\d).(\d\d):(\d\d).*Server Status . Online with (\d+) clients and (\d+) queued clients/)
 NOW=$(date --iso-8601=seconds)
 
-PLAYERS=$($PJ $HERE/get-uthgard-home-page.js | \
-             grep Players: | \
-             perl -ne 'print "$1\n" if m|(\d+)</td>|')
+PLAYERS=$($PJ | \
+            grep Players: | \
+            perl -ne 'print "$1\n" if m|(\d+)</td>|')
 
 echo Got $PLAYERS players >> $LOG
 
