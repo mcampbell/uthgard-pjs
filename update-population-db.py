@@ -79,7 +79,7 @@ def open_db(db_file):
 
     conn.execute('''
     CREATE INDEX IF NOT EXISTS ymdhms_idx 
-    ON population(year, month, day, hour, minute, second)''')
+    ON population(year, month, day)''')
 
     return conn
 
