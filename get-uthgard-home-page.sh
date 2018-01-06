@@ -10,11 +10,18 @@ trap "echo Ending at `date --iso-8601=seconds` >> $HOME/logs/get-uthgard-home-pa
 set -eu
 set -o pipefail
 
-mkdir -p $HOME/logs
-mkdir -p $HOME/uthgard/population
+################################################################################
+# Misc setup
+################################################################################
 
-LOG=$HOME/logs/get-uthgard-home-page.sh.log
-OUTPUT=$HOME/uthgard/population/$(/bin/date +%Y-%m-%d)-pj.log
+LOG_DIR=$HOME/logs
+mkdir -p $LOG_DIR
+
+OUTPUT_DIR=$HOME/uthgard/population
+mkdir -p $OUTPUT_DIR
+
+LOG=$LOG_DIR/get-uthgard-home-page.sh.log
+OUTPUT=$OUTPUT_DIR/$(/bin/date +%Y-%m-%d)-pj.log
 
 echo Starting at $(/bin/date --iso-8601=seconds) >> $LOG
 
@@ -31,10 +38,9 @@ THISBIN="$(/usr/bin/basename $0)"
 
 cd $HERE
 
-########################################
-
-# [2017-01-20T10:24:49-0500] <@[Uth]Infobot>  � Server Status � Online with 2753 clients and 4 queued clients  �
-#   md = line.match(/.(\d\d\d\d)-(\d\d)-(\d\d).(\d\d):(\d\d).*Server Status . Online with (\d+) clients and (\d+) queued clients/)
+################################################################################
+# Run phantomjs to scrape the home page for player info.
+################################################################################
 NOW=$(/bin/date --iso-8601=seconds)
 
 PLAYERS=$(/usr/bin/docker run -i --rm mcampbell/uthgard-pjs | \
@@ -44,5 +50,14 @@ PLAYERS=$(/usr/bin/docker run -i --rm mcampbell/uthgard-pjs | \
 echo Got $PLAYERS players >> $LOG
 
 echo "[${NOW}] Server Status � Online with ${PLAYERS} clients and 0 queued clients  �" >> $OUTPUT
+
+################################################################################
+# update the sqlite3 database with player population data.  This is not terribly
+# efficient, but it'll do.  It can recreate an entire day's worth of data in
+# about a second, so... not too horrible.
+################################################################################
+YMD=$(date +%Y-%m-%d)
+echo Updating data from ${OUTPUT_DIR}/${YMD}*.log
+python3 ./update-population-db.py -d ./uthgard-population.db -l ${OUTPUT_DIR}/${YMD}*.log
 
 # trap will get ending echo
