@@ -14,6 +14,7 @@ In the old days we cared about queuing, but ... haha, not any more.
 
 import sqlite3
 import argparse
+import datetime
 
 ########################################
 def main():
@@ -81,6 +82,16 @@ def open_db(db_file):
     CREATE INDEX IF NOT EXISTS ymdhms_idx 
     ON population(year, month, day)''')
 
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS pop2(
+    date        TEXT NOT NULL,
+    population  INT  NOT NULL)''')
+
+    conn.execute('''
+    CREATE INDEX IF NOT EXISTS date_idx
+    ON pop2(date)''')
+
+
     return conn
 
 ########################################
@@ -105,8 +116,15 @@ def upsert(conn, year, month, day, hour, minute, second, pop):
             print('+', end='', flush=True)
         else:
             print('.', end='', flush=True)
-        
 
+    fulldate = datetime.datetime(year, month, day,
+                                 hour, minute, second).strftime('%Y-%m-%dT%H:%M:%S')
+    for row in conn.execute('select count(*) from pop2 where date = ?', (fulldate,)):
+        count = int(row[0])
+        if count == 0:
+            conn.execute('''INSERT INTO pop2(date, population) values(?, ?)''',
+                         (fulldate, pop))
+    
 ########################################
 
 if __name__ == '__main__':
