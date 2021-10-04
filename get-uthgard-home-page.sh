@@ -36,8 +36,10 @@ function extract_ym_from_filename() {
 }
 
 cd "$OUTPUT_DIR"
-for file in $(find . -mtime +3 -name '2*.log'); do
+for file in $(find . -mtime +2 -name '2*.log'); do
+    [ ! -f "$file" ] && continue
     ZIP=./archive-$(extract_ym_from_filename "$file").zip
+    echo Archiving $file to $ZIP.
     zip -rm -T "$ZIP" "$file" &
 done
 
